@@ -13,7 +13,7 @@ from torchvision import transforms as T
 from tqdm import tqdm
 
 
-class DensNet(nn.Module):
+class DenseNet(nn.Module):
     def __init__(self, num_classes=1000, num_channels=6):
         super().__init__()
         preloaded = torchvision.models.densenet201(pretrained=True)

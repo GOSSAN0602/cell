@@ -11,7 +11,8 @@ import torchvision
 from torchvision import transforms as T
 
 class trainer(model):
-    def __init__(self,model,num_epochs,lr,loader):
+    def __init__(self, SAVE_PATH, model, num_epochs, lr, loader):
+        self.SAVE_PATH = SAVE_PATH
         self.criterion = nn.BCEWithLogitsLoss()
         self.model=model
         self.num_epochs = num_epochs
@@ -51,6 +52,8 @@ class trainer(model):
                 tloss += loss.item()
                 acc += accuracy(output.cpu(), y)
                 del loss, output, y, x, target
+            # Save Model
+            torch.save(model.state_dict(), self.SAVE_PATH+str(epoch)+'.pth')
             loss.append(tloss.to_cpu())
             print('Epoch {} -> Train Loss: {:.4f}, ACC: {:.2f}%'.format(epoch+1, tloss/tlen, acc[0]/tlen))
-        return self.model, np.array(loss)
+        return np.array(loss)
