@@ -17,9 +17,10 @@ class DenseNet(nn.Module):
     def __init__(self, num_classes=1000, num_channels=6):
         super().__init__()
         preloaded = torchvision.models.densenet201(pretrained=True)
+        #preloaded = torchvision.models.densenet121(pretrained=True)
         self.features = preloaded.features
         self.features.conv0 = nn.Conv2d(num_channels, 64, 7, 2, 3)
-        self.classifier = nn.Linear(1024, num_classes, bias=True)
+        self.classifier = nn.Linear(1920, num_classes, bias=True)
         del preloaded
 
     def forward(self, x):

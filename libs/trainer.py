@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 import sys
+sys.path.append('./')
 
 import torch
 import torch.nn as nn
@@ -9,15 +10,17 @@ import torch.utils.data as D
 import torch.nn.functional as F
 import torchvision
 from torchvision import transforms as T
+from libs.radam import RAdam
 
 class trainer():
     def __init__(self, model, SAVE_PATH, num_epochs, lr, loader):
         self.SAVE_PATH = SAVE_PATH
-        self.criterion = nn.BCEWithLogitsLoss()
+        self.criterion = nn.CrossEntropyLoss()
         self.model=model
         self.num_epochs = num_epochs
         self.loader=loader
-        self.optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+        self.optimizer = RAdam(model.parameters())
+        self.criterion = nn.BCEWithLogitsLoss()
 
     def accuracy(self, output, target, topk=(1,)):
     # Computes the accuracy over the k top predictions for the specified values of k
@@ -37,24 +40,29 @@ class trainer():
 
     def train_model(self):
         device='cuda'
-        loss=[]
+        loss_list=[]
+        tlen = len(self.loader)
         for epoch in range(self.num_epochs):
             tloss = 0
             acc = np.zeros(1)
+            i=0
             for x, y in self.loader:
+                i+=1
+                if i%110==0:
+                    print(str(i)+'/'+str(len(self.loader))+' BATCH')
                 x = x.to(device)
                 self.optimizer.zero_grad()
                 output = self.model(x)
                 target = torch.zeros_like(output, device=device)
                 target[np.arange(x.size(0)), y] = 1
-                loss = criterion(output, target)
+                loss = self.criterion(output, target)
                 loss.backward()
                 self.optimizer.step()
                 tloss += loss.item()
-                acc += accuracy(output.cpu(), y)
+                acc += self.accuracy(output.cpu(), y)
                 del loss, output, y, x, target
             # Save Model
-            torch.save(model.state_dict(), self.SAVE_PATH+str(epoch)+'.pth')
-            loss.append(tloss.to_cpu())
+            torch.save(self.model.state_dict(), self.SAVE_PATH+str(epoch)+'.pth')
+            loss_list.append(tloss)
             print('Epoch {} -> Train Loss: {:.4f}, ACC: {:.2f}%'.format(epoch+1, tloss/tlen, acc[0]/tlen))
-        return np.array(loss)
+        return np.array(loss_list)

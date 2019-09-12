@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 import sys
+import os
 
 import torch
 import torch.nn as nn
@@ -16,6 +17,7 @@ sys.path.append('./')
 from libs.model import DenseNet
 from libs.data import ImagesDS
 from libs.trainer import trainer
+from libs.plot import plot_loss
 from tqdm import tqdm
 
 
@@ -29,7 +31,8 @@ args = parser.parse_args()
 path_data='/home/shuki_goto/input/'
 device='cuda'
 batch_size=16
-SAVE_PATH = '/home/shuki_goto/log/'+args.tag+'/'
+SAVE_PATH = '/home/shuki_goto/cell/log/'+args.tag+'/'
+os.mkdir('/home/shuki_goto/cell/log/'+args.tag)
 
 #define dataset
 ds = ImagesDS(path_data+'train.csv', path_data+'imgs')
@@ -39,6 +42,7 @@ ds_test = ImagesDS(path_data+'test.csv', path_data+'imgs', mode='test')
 num_classes = 1108
 model = DenseNet(num_classes=num_classes)
 model.to(device)
+model = torch.nn.DataParallel(model) # make parallel
 
 #define dataloader
 train_loader = D.DataLoader(ds, batch_size=batch_size, shuffle=True, num_workers=2)
@@ -48,10 +52,11 @@ test_loader = D.DataLoader(ds_test, batch_size=batch_size, shuffle=False, num_wo
 trainer=trainer(model, SAVE_PATH=SAVE_PATH, num_epochs=args.n_epochs, lr=args.lr, loader=train_loader)
 
 # train model
-trained_model, loss = trainer.train_model()
+#trained_model, loss = trainer.train_model()
+loss = trainer.train_model()
 
 # save model
-torch.save(trained_model.state_dict(), SAVE_PATH+'models/')
+#torch.save(trained_model.state_dict(), SAVE_PATH+'models/')
 
 # make loss figure
 plot_loss(loss, args.n_epochs, SAVE_PATH)
