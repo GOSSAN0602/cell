@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 import torch.utils.data as D
+from torchvision import transforms as T
 
 from PIL import Image
 
@@ -10,7 +11,7 @@ import torch
 class ImagesDS(D.Dataset):
     def __init__(self, csv_file, img_dir, mode='train', site=1, channels=[1,2,3,4,5,6]):
 
-        df = pd.read_csv(csv_file)
+        df = pd.read_csv(csv_file, engine='python')
         self.records = df.to_records(index=False)
         self.channels = channels
         self.site = site

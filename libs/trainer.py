@@ -10,45 +10,46 @@ import torch.nn.functional as F
 import torchvision
 from torchvision import transforms as T
 
-class trainer(model):
-    def __init__(self, SAVE_PATH, model, num_epochs, lr, loader):
+class trainer():
+    def __init__(self, model, SAVE_PATH, num_epochs, lr, loader):
         self.SAVE_PATH = SAVE_PATH
         self.criterion = nn.BCEWithLogitsLoss()
         self.model=model
         self.num_epochs = num_epochs
         self.loader=loader
-        optimizer = torch.optim.Adam(model.parameters(lr=lr))
+        self.optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
-    def accuracy(output, target, topk=(1,)):
-    """Computes the accuracy over the k top predictions for the specified values of k"""
-    with torch.no_grad():
-        maxk = max(topk)
-        batch_size = target.size(0)
+    def accuracy(self, output, target, topk=(1,)):
+    # Computes the accuracy over the k top predictions for the specified values of k
+        with torch.no_grad():
+            maxk = max(topk)
+            batch_size = target.size(0)
 
-        _, pred = output.topk(maxk, 1, True, True)
-        pred = pred.t()
-        correct = pred.eq(target.view(1, -1).expand_as(pred))
+            _, pred = output.topk(maxk, 1, True, True)
+            pred = pred.t()
+            correct = pred.eq(target.view(1, -1).expand_as(pred))
 
-        res = []
-        for k in topk:
-            correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
-            res.append(correct_k.mul_(100.0 / batch_size).item())
-        return np.array(res)
+            res = []
+            for k in topk:
+                correct_k = correct[:k].view(-1).float().sum(0, keepdim=True)
+                res.append(correct_k.mul_(100.0 / batch_size).item())
+            return np.array(res)
 
-    def train_model():
+    def train_model(self):
+        device='cuda'
         loss=[]
         for epoch in range(self.num_epochs):
             tloss = 0
             acc = np.zeros(1)
             for x, y in self.loader:
                 x = x.to(device)
-                optimizer.zero_grad()
+                self.optimizer.zero_grad()
                 output = self.model(x)
                 target = torch.zeros_like(output, device=device)
                 target[np.arange(x.size(0)), y] = 1
                 loss = criterion(output, target)
                 loss.backward()
-                optimizer.step()
+                self.optimizer.step()
                 tloss += loss.item()
                 acc += accuracy(output.cpu(), y)
                 del loss, output, y, x, target
