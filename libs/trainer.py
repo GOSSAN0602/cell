@@ -20,7 +20,6 @@ class trainer():
         self.num_epochs = num_epochs
         self.loader=loader
         self.optimizer = RAdam(model.parameters())
-        self.criterion = nn.BCEWithLogitsLoss()
 
     def accuracy(self, output, target, topk=(1,)):
     # Computes the accuracy over the k top predictions for the specified values of k
@@ -52,17 +51,21 @@ class trainer():
                     print(str(i)+'/'+str(len(self.loader))+' BATCH')
                 x = x.to(device)
                 self.optimizer.zero_grad()
-                output = self.model(x)
-                target = torch.zeros_like(output, device=device)
-                target[np.arange(x.size(0)), y] = 1
-                loss = self.criterion(output, target)
+                feature = self.model(x)
+                arc_target = torch.zeros([feature.shape[0],1108],device=device)
+                arc_target[np.arange(x.size(0)), y] = 1
+                arc_output=self.model.module.arc(feature,arc_target)
+                #target = torch.zeros([feature.shape[0],1108], dtype=torch.long, device=device)
+                #target[np.arange(x.size(0)), y] = 1
+                loss = self.criterion(arc_output, y.to(device))
                 loss.backward()
                 self.optimizer.step()
                 tloss += loss.item()
-                acc += self.accuracy(output.cpu(), y)
-                del loss, output, y, x, target
+                acc += self.accuracy(arc_output.cpu(), y)
+                del loss, arc_output, y, x, arc_target
             # Save Model
             torch.save(self.model.state_dict(), self.SAVE_PATH+str(epoch)+'.pth')
             loss_list.append(tloss)
+            np.save('loss.npy', np.array(loss_list))
             print('Epoch {} -> Train Loss: {:.4f}, ACC: {:.2f}%'.format(epoch+1, tloss/tlen, acc[0]/tlen))
         return np.array(loss_list)

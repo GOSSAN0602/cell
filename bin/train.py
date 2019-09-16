@@ -30,9 +30,9 @@ args = parser.parse_args()
 #config
 path_data='/home/shuki_goto/input/'
 device='cuda'
-batch_size=16
-SAVE_PATH = '/home/shuki_goto/cell/log/'+args.tag+'/'
-os.mkdir('/home/shuki_goto/cell/log/'+args.tag)
+batch_size=32
+SAVE_PATH = '/home/shuki_goto/log/'+args.tag+'/'
+os.mkdir('/home/shuki_goto/log/'+args.tag)
 
 #define dataset
 ds = ImagesDS(path_data+'train.csv', path_data+'imgs')
